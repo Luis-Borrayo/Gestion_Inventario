@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Entity
 @Table(name = "productos")
@@ -12,18 +13,7 @@ import java.time.LocalDateTime;
         query = "SELECT p FROM Productos p WHERE p.stock = :stock"
 )
 public class Productos {
-    public enum Categoria {
-        Electrónica,
-        Electrodomésticos,
-        Hogar,
-        Salud_y_Belleza,
-        Deportes_y_Fitness,
-        Jardinería,
-        Tecnología,
-        Entretenimiento
-    }
-
-    public enum Estado {
+        public enum Estado {
         Activo,
         Inactivo
     }
@@ -34,7 +24,8 @@ public class Productos {
     @Column(length = 120, unique = true, nullable = false)
     private String nombre;
 
-    @Enumerated(EnumType.STRING)
+    @OneToOne(optional = false)
+    @JoinColumn(name = "categoria_id")
     private Categoria categoria;
 
     @Column(nullable = false)
