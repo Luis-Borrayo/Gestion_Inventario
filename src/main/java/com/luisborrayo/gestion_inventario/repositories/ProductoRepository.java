@@ -12,6 +12,7 @@ import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,11 +43,13 @@ public class ProductoRepository {
 
     @Transactional
     public void update(Productos producto) {
-
+        em.merge(producto);
     }
 
     public List<Productos> findByStock(Integer stock) {
-        return em.createQuery("SELECT p FROM Productos p WHERE p.stock = :stock",  Productos.class).setParameter("stock", stock).getResultList();
+        return em.createQuery("SELECT p FROM Productos p WHERE p.stock = :stock", Productos.class)
+                .setParameter("stock", stock)
+                .getResultList();
     }
 
     public List<Productos> findAll() {
@@ -54,7 +57,7 @@ public class ProductoRepository {
     }
 
     public List<Productos> buscarconFiltro(String nombre, Categoria categoria, BigDecimal preciomin, BigDecimal preciomax,
-                                           Productos.Estado estado, Integer stockmin, Integer stockmax, int page, int pageSize, String orderBy,
+                                           Productos.Estado estado, Integer stockmin, Integer stockmax, int page, int pageSize, String sortBy,
                                            boolean asc) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Productos> cq = cb.createQuery(Productos.class);
@@ -83,15 +86,49 @@ public class ProductoRepository {
             predicates.add(cb.lessThanOrEqualTo(root.get("stock"), stockmax));
         }
 
+        cq.where(predicates.toArray(new Predicate[0]));
+
         if (sortBy != null && !sortBy.isEmpty()) {
             cq.orderBy(asc ? cb.asc(root.get(sortBy)) : cb.desc(root.get(sortBy)));
         }
 
         TypedQuery<Productos> query = em.createQuery(cq);
-        query.setFirstResult(page * pageSize); // paginación
+        query.setFirstResult(page * pageSize);
         query.setMaxResults(pageSize);
 
         return query.getResultList();
     }
+
+    // ==================== LÍNEAS AZULES - KPIs DASHBOARD ====================
+
+    // KPI: Total de productos
+    public Long getTotalProductos() {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Long> query = cb.createQuery(Long.class);
+        Root<Productos> root = query.from(Productos.class);
+        query.select(cb.count(root));
+        return em.createQuery(query).getSingleResult();
+    }
+
+    // KPI: Productos con stock bajo (umbral configurable)
+    public Long getProductosStockBajo(Integer umbral) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Long> query = cb.createQuery(Long.class);
+        Root<Productos> root = query.from(Productos.class);
+        query.select(cb.count(root));
+        query.where(cb.lessThanOrEqualTo(root.get("stock"), umbral));
+        return em.createQuery(query).getSingleResult();
+    }
+
+    // KPI: Productos inactivos
+    public Long getProductosInactivos() {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Long> query = cb.createQuery(Long.class);
+        Root<Productos> root = query.from(Productos.class);
+        query.select(cb.count(root));
+        query.where(cb.equal(root.get("estado"), Productos.Estado.Inactivo));
+        return em.createQuery(query).getSingleResult();
+    }
+
 
 }
