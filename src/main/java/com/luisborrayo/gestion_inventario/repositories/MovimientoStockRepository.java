@@ -142,4 +142,46 @@ public class MovimientoStockRepository {
 
         return em.createQuery(query).getResultList();
     }
+
+    // ==================== LÍNEA ROSA: Métodos adicionales ====================
+
+    /**
+     * LÍNEA ROSA: Obtener todos los movimientos
+     */
+    public List<MovimientoStock> findAll() {
+        return em.createQuery("SELECT m FROM MovimientoStock m ORDER BY m.fecha DESC",
+                MovimientoStock.class).getResultList();
+    }
+
+    /**
+     * LÍNEA ROSA: Buscar movimiento por ID
+     */
+    public MovimientoStock findById(Long id) {
+        return em.find(MovimientoStock.class, id);
+    }
+
+    /**
+     * LÍNEA ROSA: Obtener últimos N movimientos
+     */
+    public List<MovimientoStock> getUltimosMovimientos(int cantidad) {
+        return em.createQuery(
+                        "SELECT m FROM MovimientoStock m ORDER BY m.fecha DESC",
+                        MovimientoStock.class)
+                .setMaxResults(cantidad)
+                .getResultList();
+    }
+
+    /**
+     * LÍNEA ROSA: Contar movimientos por producto
+     */
+    public Long contarMovimientosPorProducto(Long productoId) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Long> query = cb.createQuery(Long.class);
+        Root<MovimientoStock> root = query.from(MovimientoStock.class);
+
+        query.select(cb.count(root));
+        query.where(cb.equal(root.get("productoId"), productoId));
+
+        return em.createQuery(query).getSingleResult();
+    }
 }

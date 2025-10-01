@@ -183,5 +183,42 @@ public class ProductoRepository {
         return em.createQuery(query).getSingleResult();
     }
 
+    // ==================== LÍNEAS ROSAS - Creado por Lourdes ====================
+
+    // LÍNEA ROSA: Total de categorías
+    public Long getTotalCategorias() {
+        String jpql = "SELECT COUNT(DISTINCT p.categoria) FROM Productos p";
+        return em.createQuery(jpql, Long.class).getSingleResult();
+    }
+
+    // LÍNEA ROSA: Movimientos registrados esta semana
+    public Long getMovimientosEstaSemana() {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Long> query = cb.createQuery(Long.class);
+        Root<MovimientoStockRepository> root = query.from(MovimientoStockRepository.class);
+
+        LocalDate inicioSemana = LocalDate.now().minusDays(7);
+
+        query.select(cb.count(root));
+        query.where(cb.greaterThanOrEqualTo(root.get("fecha"), inicioSemana));
+
+        return em.createQuery(query).getSingleResult();
+    }
+
+    // LÍNEA ROSA: Fecha de última actualización de inventario
+    public LocalDate getFechaUltimaActualizacion() {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<LocalDate> query = cb.createQuery(LocalDate.class);
+        Root<MovimientoStockRepository> root = query.from(MovimientoStockRepository.class);
+
+        query.select(cb.greatest(root.get("fecha")));
+
+        try {
+            return em.createQuery(query).getSingleResult();
+        } catch (Exception e) {
+            return LocalDate.now();
+        }
+    }
+
 
 }
