@@ -12,7 +12,6 @@ import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,14 +19,30 @@ public class ProductoRepository {
     @PersistenceContext
     private EntityManager em;
 
+    //CRUD completo.
+    //Al registrar/editar, validar campos obligatorios y rangos (precio, stock).
     @Transactional
     public void save(Productos producto) {
+        if (producto.getNombre() == null || producto.getNombre().isBlank()) {
+            throw new IllegalArgumentException("El nombre es obligatorio.");
+        }
+        if (producto.getPrecio() == null || producto.getPrecio().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("El precio debe ser mayor que 0.");
+        }
+        if (producto.getStock() == null || producto.getStock() < 0) {
+            throw new IllegalArgumentException("El stock no puede ser negativo.");
+        }
+        if (producto.getCategoria() == null) {
+            throw new IllegalArgumentException("El producto debe tener categoría.");
+        }
+
         if (producto.getId() == null) {
             em.persist(producto);
         } else {
             em.merge(producto);
         }
     }
+
 
     public Productos findById(Long id) {
         return em.find(Productos.class, id);
@@ -41,9 +56,33 @@ public class ProductoRepository {
         }
     }
 
+    // 🔹 Total de productos
+    public long count() {
+        return em.createQuery("SELECT COUNT(p) FROM Productos p", Long.class)
+                .getSingleResult();
+    }
+
+    // 🔹 Productos con stock bajo
+    public long countStockBajo(int umbral) {
+        return em.createQuery("SELECT COUNT(p) FROM Productos p WHERE p.stock < :umbral", Long.class)
+                .setParameter("umbral", umbral)
+                .getSingleResult();
+    }
+
+    // 🔹 Productos inactivos
+    public long countInactivos() {
+        return em.createQuery("SELECT COUNT(p) FROM Productos p WHERE p.estado = :estado", Long.class)
+                .setParameter("estado", Productos.Estado.Inactivo)
+                .getSingleResult();
+    }
+
     @Transactional
     public void update(Productos producto) {
-        em.merge(producto);
+        if (producto.getId() != null) {
+            em.merge(producto);
+        }else{
+            throw new IllegalArgumentException("No se pudo actualizar el producto");
+        }
     }
 
     public List<Productos> findByStock(Integer stock) {
@@ -56,6 +95,19 @@ public class ProductoRepository {
         return em.createQuery("SELECT p FROM Productos p", Productos.class).getResultList();
     }
 
+    public boolean existePorNombreYCategoria(String nombre, Long categoriaId) {
+        Long count = em.createQuery(
+                        "SELECT COUNT(p) FROM Productos p WHERE p.nombre = :nombre AND p.categoria.id = :categoriaId",
+                        Long.class
+                )
+                .setParameter("nombre", nombre)
+                .setParameter("categoriaId", categoriaId)
+                .getSingleResult();
+
+        return count > 0;
+    }
+
+    //Listado con búsqueda y filtros combinables (por nombre, categoría, precio mínimo/máximo, activo, rango de fechas).
     public List<Productos> buscarconFiltro(String nombre, Categoria categoria, BigDecimal preciomin, BigDecimal preciomax,
                                            Productos.Estado estado, Integer stockmin, Integer stockmax, int page, int pageSize, String sortBy,
                                            boolean asc) {
@@ -92,6 +144,7 @@ public class ProductoRepository {
             cq.orderBy(asc ? cb.asc(root.get(sortBy)) : cb.desc(root.get(sortBy)));
         }
 
+        //Paginación y ordenamiento.
         TypedQuery<Productos> query = em.createQuery(cq);
         query.setFirstResult(page * pageSize);
         query.setMaxResults(pageSize);

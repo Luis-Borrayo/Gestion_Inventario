@@ -8,6 +8,7 @@ import jakarta.persistence.criteria.*;
 import jakarta.transaction.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +21,23 @@ public class MovimientoStockRepository {
     private EntityManager em;
 
     // ==================== LÍNEA AZUL: Registrar Entrada y Salida ====================
+    @Transactional
+    public void save(MovimientoStock movimiento) {
+        em.persist(movimiento);
+    }
 
+    public long countByFechaDesde(LocalDateTime fecha) {
+        return em.createQuery(
+                        "SELECT COUNT(m) FROM MovimientoStock m WHERE m.fecha >= :fecha", Long.class)
+                .setParameter("fecha", fecha)
+                .getSingleResult();
+    }
+
+    public LocalDateTime findMaxFecha() {
+        return em.createQuery(
+                        "SELECT MAX(m.fecha) FROM MovimientoStock m", LocalDateTime.class)
+                .getSingleResult();
+    }
     /**
      * LÍNEA AZUL: Registrar Entrada
      * Registra entrada de stock (fecha, cantidad, motivo, producto)
@@ -54,24 +71,22 @@ public class MovimientoStockRepository {
      * LÍNEA VERDE: Valida que la salida no deje stock negativo
      */
     @Transactional
-    public MovimientoStock registrarSalida(Long productoId, Integer cantidad, String motivo)
-            throws IllegalArgumentException {
-
-        // Obtener producto
+    public MovimientoStock registrarSalida(Long productoId, Integer cantidad, String motivo) {
         Productos producto = em.find(Productos.class, productoId);
         if (producto == null) {
             throw new IllegalArgumentException("Producto no encontrado");
         }
 
-        // LÍNEA VERDE: Validar que Salida no deje stock negativo
-        if (producto.getStock() - cantidad < 0) {
-            throw new IllegalArgumentException(
-                    "Error: La salida dejaría stock negativo. Stock actual: " +
-                            producto.getStock() + ", Cantidad solicitada: " + cantidad
-            );
+        if (producto.getEstado() == Productos.Estado.Inactivo) {
+            throw new IllegalStateException("El producto está inactivo y no admite salidas.");
         }
 
-        // Crear movimiento
+        if (producto.getStock() < cantidad) {
+            throw new IllegalArgumentException("Stock insuficiente. Stock actual: " +
+                    producto.getStock() + ", cantidad solicitada: " + cantidad);
+        }
+
+        // Crear y guardar movimiento
         MovimientoStock movimiento = new MovimientoStock();
         movimiento.setProductoId(productoId);
         movimiento.setTipo("SALIDA");
@@ -80,7 +95,7 @@ public class MovimientoStockRepository {
         movimiento.setFecha(LocalDate.now());
         em.persist(movimiento);
 
-        // LÍNEA VERDE: Actualizar stockActual del producto
+        // Actualizar stock
         producto.setStock(producto.getStock() - cantidad);
         em.merge(producto);
 

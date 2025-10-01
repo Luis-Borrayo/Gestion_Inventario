@@ -7,10 +7,12 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Entity
-@Table(name = "productos")
-@NamedQuery(
-        name = "productos.stock",
-        query = "SELECT p FROM Productos p WHERE p.stock = :stock"
+@Table(
+        name = "productos",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_nombre_categoria",
+                columnNames = {"nombre", "categoria_id"}
+        )
 )
 public class Productos {
         public enum Estado {
@@ -21,10 +23,10 @@ public class Productos {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 120, unique = true, nullable = false)
+    @Column(length = 120, nullable = false)
     private String nombre;
 
-    @OneToOne(optional = false)
+    @ManyToOne(optional = false)
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
 
