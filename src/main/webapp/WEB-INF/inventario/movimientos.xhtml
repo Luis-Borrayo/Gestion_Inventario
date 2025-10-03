@@ -1,13 +1,14 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
                 xmlns:p="http://primefaces.org/ui"
                 template="/WEB-INF/templates/layout.xhtml">
 
     <ui:define name="content">
         <h1>🔄 Movimientos</h1>
 
-        <p:panel header="Filtros" style="margin-bottom:1rem;backdrop-filter:blur(8px);background:rgba(255,255,255,0.05);">
+        <p:panel header="Filtros" style="margin-bottom:1rem;backdrop-filter:blur(8px);background:rgba(255,255,255,0.05);color:white;">
             <h:form>
                 <p:inputText placeholder="Producto"/>
                 <p:selectOneMenu>
@@ -17,16 +18,19 @@
                 </p:selectOneMenu>
                 <p:calendar placeholder="Fecha inicio"/>
                 <p:calendar placeholder="Fecha fin"/>
-                <p:commandButton value="Filtrar" icon="pi pi-search" styleClass="p-button-rounded p-button-info"/>
+                <p:commandButton value="Filtrar" icon="pi pi-search"
+                                 styleClass="p-button-rounded p-button-info"/>
             </h:form>
         </p:panel>
 
-        <p:dataTable var="m" value="#{movimientoBean.lista}">
-            <p:column headerText="ID">#{m.id}</p:column>
-            <p:column headerText="Producto">#{m.producto.nombre}</p:column>
-            <p:column headerText="Tipo">#{m.tipo}</p:column>
-            <p:column headerText="Cantidad">#{m.cantidad}</p:column>
-            <p:column headerText="Fecha">#{m.fecha}</p:column>
-        </p:dataTable>
+        <h:form>
+            <p:dataTable var="m" value="#{movimientoBean.lista}">
+                <p:column headerText="ID">#{m.id}</p:column>
+                <p:column headerText="Producto">#{m.producto.nombre}</p:column>
+                <p:column headerText="Tipo">#{m.tipo}</p:column>
+                <p:column headerText="Cantidad">#{m.cantidad}</p:column>
+                <p:column headerText="Fecha">#{m.fecha}</p:column>
+            </p:dataTable>
+        </h:form>
     </ui:define>
 </ui:composition>

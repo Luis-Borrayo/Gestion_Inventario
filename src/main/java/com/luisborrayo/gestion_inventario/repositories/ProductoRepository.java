@@ -1,6 +1,7 @@
 package com.luisborrayo.gestion_inventario.repositories;
 
 import com.luisborrayo.gestion_inventario.models.Categoria;
+import com.luisborrayo.gestion_inventario.models.MovimientoStock;
 import com.luisborrayo.gestion_inventario.models.Productos;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -12,6 +13,7 @@ import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -209,16 +211,14 @@ public class ProductoRepository {
     public LocalDate getFechaUltimaActualizacion() {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<LocalDate> query = cb.createQuery(LocalDate.class);
-        Root<MovimientoStockRepository> root = query.from(MovimientoStockRepository.class);
+        Root<MovimientoStock> root = query.from(MovimientoStock.class); // ✅ usar la entidad real
 
-        query.select(cb.greatest(root.get("fecha")));
+        query.select(cb.greatest(root.<LocalDate>get("fecha"))); // ahora sí compila
 
         try {
             return em.createQuery(query).getSingleResult();
         } catch (Exception e) {
-            return LocalDate.now();
+            return null; // o LocalDate.now(), según prefieras
         }
     }
-
-
 }
