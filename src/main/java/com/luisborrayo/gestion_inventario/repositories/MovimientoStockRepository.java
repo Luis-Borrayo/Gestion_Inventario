@@ -26,19 +26,18 @@ public class MovimientoStockRepository {
         em.persist(movimiento);
     }
 
-    public long countByFechaDesde(LocalDate fecha) {
+    public long countByFechaDesde(LocalDateTime fecha) {
         return em.createQuery(
                         "SELECT COUNT(m) FROM MovimientoStock m WHERE m.fecha >= :fecha", Long.class)
                 .setParameter("fecha", fecha)
                 .getSingleResult();
     }
 
-    public LocalDate findMaxFecha() {
+    public LocalDateTime findMaxFecha() {
         return em.createQuery(
-                        "SELECT MAX(m.fecha) FROM MovimientoStock m", LocalDate.class)
+                        "SELECT MAX(m.fecha) FROM MovimientoStock m", LocalDateTime.class)
                 .getSingleResult();
     }
-
     /**
      * LÍNEA AZUL: Registrar Entrada
      * Registra entrada de stock (fecha, cantidad, motivo, producto)
