@@ -197,7 +197,7 @@ public class ProductoRepository {
     public Long getMovimientosEstaSemana() {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Long> query = cb.createQuery(Long.class);
-        Root<MovimientoStockRepository> root = query.from(MovimientoStockRepository.class);
+        Root<MovimientoStock> root = query.from(MovimientoStock.class);
 
         LocalDate inicioSemana = LocalDate.now().minusDays(7);
 
