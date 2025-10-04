@@ -15,7 +15,7 @@ import java.util.Optional;
         )
 )
 public class Productos {
-        public enum Estado {
+    public enum Estado {
         Activo,
         Inactivo
     }
@@ -95,4 +95,3 @@ public class Productos {
         this.estado = estado;
     }
 }
-
